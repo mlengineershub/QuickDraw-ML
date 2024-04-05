@@ -2,6 +2,9 @@
 
 In this folder, you will find the selected data and the undersampling performed for the project. The initial dataset contains several thousand images across 350 labels, which is quite substantial given the resources available to us.
 
+This README provides a detailed description of the folder's contents and clear instructions for using the `dataset_builder.py` script.
+
+
 ## Contents of [/data](.)
 
 | Folder/Files       | Description                                                                  |
@@ -47,3 +50,6 @@ To construct your dataset from the size_10000 folder to the data folder, taking,
 
 ```bash
 python data/dataset_builder.py /<PATH_TO_PROJECT>/data/size_10000 /<PATH_TO_PROJECT>/data --max_images 250 --labels /<PATH_TO_PROJECT>/data/labels.txt --test_size 0.3 --val_size 0.3
+```
+
+A progress bar will appear to show the generation's progress.
