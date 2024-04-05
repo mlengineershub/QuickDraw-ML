@@ -53,3 +53,7 @@ python data/dataset_builder.py /<PATH_TO_PROJECT>/data/size_10000 /<PATH_TO_PROJ
 ```
 
 A progress bar will appear to show the generation's progress.
+
+Here an example of images in the train set:
+
+![Sample Images](../experiments/plots/sample_images.png)
