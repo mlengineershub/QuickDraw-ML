@@ -1,0 +1,24 @@
+airplane
+banana
+computer
+dog
+elephant
+fish
+garden
+helmet
+ice cream
+jail
+key
+lantern
+motorbike
+necklace
+onion
+penguin
+raccoon
+sandwich
+table
+underwear
+vase
+watermelon
+yoga
+zigzag
