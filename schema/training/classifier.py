@@ -456,6 +456,10 @@ class TransformersFEClassifier(FEClassifier):
                 mlflow.log_artifact(val_confusion_matrix_path)
                 os.remove(val_confusion_matrix_path)
 
+                mlflow.log_metrics({"train_length": len(self.data["train"]),
+                                    "val_length": len(self.data["val"]),
+                                    "num_labels": len(self.label2idx)})
+
         except Exception as e:
             self.run_name = None
             raise e
