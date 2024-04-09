@@ -486,4 +486,7 @@ class TransformersFEClassifier(FEClassifier):
             mlflow.log_artifact(test_confusion_matrix_path)
             os.remove(test_confusion_matrix_path)
 
+            mlflow.log_metrics({"test_length": len(self.data["test"]),
+                                "num_labels": len(self.label2idx)})
+
         return metrics
