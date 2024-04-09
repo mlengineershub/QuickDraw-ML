@@ -10,7 +10,7 @@ def data_to_img(o: Dict) -> Image:
     """
     Return an image from a drawing object (usually object["drawing in the point list"])
     @param o {dict} the object from the dataset
-    @return a PIL Image of size (3, 256, 256)
+    @return {Image} a PIL Image of size (3, 256, 256)
     """
     
     l = o["drawing"]
@@ -36,7 +36,7 @@ def json_to_img(json_folder: str,
                 labels: Optional[List[str]] = None,
                 delete_on_error: bool = False,
                 test_size: float = 0.2,
-                val_size: float = 0.2):
+                val_size: float = 0.2) -> None:
     """
     Create images from json files and split into train, test, and validation sets without using sklearn.
     

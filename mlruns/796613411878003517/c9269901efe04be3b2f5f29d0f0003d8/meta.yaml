@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/796613411878003517/c9269901efe04be3b2f5f29d0f0003d8/artifacts
+end_time: 1712680636135
+entry_point_name: ''
+experiment_id: '796613411878003517'
+lifecycle_stage: active
+run_id: c9269901efe04be3b2f5f29d0f0003d8
+run_name: google/vit-base-patch16-224_GaussianNB_2024-04-09-18-37-15
+run_uuid: c9269901efe04be3b2f5f29d0f0003d8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1712680635145
+status: 3
+tags: []
+user_id: v8
