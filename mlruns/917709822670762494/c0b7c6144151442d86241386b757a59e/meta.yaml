@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/917709822670762494/c0b7c6144151442d86241386b757a59e/artifacts
+end_time: 1713115746842
+entry_point_name: ''
+experiment_id: '917709822670762494'
+lifecycle_stage: active
+run_id: c0b7c6144151442d86241386b757a59e
+run_name: ResNet_GaussianNB_2024-04-14-19-29-03
+run_uuid: c0b7c6144151442d86241386b757a59e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1713115743723
+status: 3
+tags: []
+user_id: v8
