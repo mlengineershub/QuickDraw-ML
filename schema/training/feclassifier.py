@@ -5,6 +5,7 @@ from .baseclassifier import BaseClassifier, SklearnModel, TorchModel
 # Standard library imports
 from abc import ABC, abstractmethod
 from datetime import datetime
+import pandas as pd
 import os
 import re
 from time import perf_counter
@@ -214,7 +215,10 @@ class FEClassifier(BaseClassifier, ABC):
         try:
             self.run_name = f"{self.model_name}_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
             with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
-                self.classifier_model.fit(self.data["train"]["embeddings"], self.data["train"]["labels"])
+                df_tmp = pd.DataFrame({"embeddings": self.data["train"]["embeddings"], 
+                                       "labels": self.data["train"]["labels"]})
+                df_tmp = df_tmp.sample(frac=1, random_state=self.seed)
+                self.classifier_model.fit(df_tmp["embeddings"].tolist(), df_tmp["labels"].tolist())
                 mlflow.log_params(self.training_args)
                 mlflow.log_metrics(self.compute_metrics("train"))
                 mlflow.log_metrics(self.compute_metrics("val"))

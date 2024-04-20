@@ -177,3 +177,23 @@ class BaseClassifier(ABC):
         """
 
         pass
+
+    @abstractmethod
+    def evaluate(self,
+                 *args,
+                 **kwargs) -> None:
+        """
+        Evaluate the model and log the results in MLflow
+        """
+
+        pass
+
+    @abstractmethod
+    def plot_confusion_matrix(self,
+                              *args,
+                              **kwargs) -> None:
+        """
+        Plot the confusion matrix
+        """
+
+        pass
