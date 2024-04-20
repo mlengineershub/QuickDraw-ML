@@ -109,8 +109,8 @@ class BaseClassifier(ABC):
         self.data_path = data_path
 
         self._set_seed()
-        self._set_device()
         self._set_training_args()
+        self._set_device()
         self._set_data(data_path, label2idx)
 
         self.metrics = {}

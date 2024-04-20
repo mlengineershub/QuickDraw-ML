@@ -200,7 +200,7 @@ class FEClassifier(BaseClassifier, ABC):
             print('No embeddings found, computing them')
             self.embed()
 
-        if isinstance(self.data, dict) and ("embeddings" not in self.data["train"]):
+        elif isinstance(self.data, dict) and ("embeddings" not in self.data["train"]):
             print('No embeddings found, computing them')
             self.embed()
 
@@ -247,8 +247,9 @@ class FEClassifier(BaseClassifier, ABC):
                                         "num_labels": len(self.label2idx)})
 
         except Exception as e:
+            os.remove(train_confusion_matrix_path)
             self.run_name = None
-            raise e
+            print(e)
     
     def evaluate(self) -> Dict[str, Any]:
         """
@@ -365,6 +366,8 @@ class TorchFEClassifier(FEClassifier):
         data_train = ImageFolder(root=f"{data_path}/train", transform=self.tranform)
         data_val = ImageFolder(root=f"{data_path}/val", transform=self.tranform)
         data_test = ImageFolder(root=f"{data_path}/test", transform=self.tranform)
+
+        assert data_train.class_to_idx == data_val.class_to_idx == data_test.class_to_idx
 
         self.label2idx = data_train.class_to_idx
         self.idx2label = {v: k for k, v in self.label2idx.items()}
