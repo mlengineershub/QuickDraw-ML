@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/917709822670762494/c36e03c18b2a4e3c864fcfd3ca8e8c16/artifacts
+end_time: 1714309487171
+entry_point_name: ''
+experiment_id: '917709822670762494'
+lifecycle_stage: active
+run_id: c36e03c18b2a4e3c864fcfd3ca8e8c16
+run_name: google/vit-base-patch16-224_LogisticRegression_2024-04-28-15-04-33
+run_uuid: c36e03c18b2a4e3c864fcfd3ca8e8c16
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1714309473832
+status: 3
+tags: []
+user_id: RAZER

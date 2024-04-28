@@ -102,8 +102,7 @@ if __name__ == "__main__":
 
     # Examples
     # python data/dataset_builder.py -h
-    # python data/dataset_builder.py data/quickdraw/simplified data/quickdraw --max_images 250 --labels airplane apple
-    # python data/dataset_builder.py data/quickdraw/simplified data/quickdraw --max_images 250 --labels data/quickdraw/labels.txt
+    # python data/dataset_builder.py data/size_10000 data --max_images 250 --labels data/labels.txt
 
     parser = argparse.ArgumentParser(description="Create the QuickDraw dataset from the json files")
     parser.add_argument("input_path", type=str, help="The folder containing the json files")
