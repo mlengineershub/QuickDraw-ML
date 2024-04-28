@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/917709822670762494/9d329554a06d45a3a41330698976e67a/artifacts
+end_time: 1714330474878
+entry_point_name: ''
+experiment_id: '917709822670762494'
+lifecycle_stage: active
+run_id: 9d329554a06d45a3a41330698976e67a
+run_name: google/vit-base-patch16-224_XGBClassifier_2024-04-28-20-53-27
+run_uuid: 9d329554a06d45a3a41330698976e67a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1714330407609
+status: 3
+tags: []
+user_id: RAZER

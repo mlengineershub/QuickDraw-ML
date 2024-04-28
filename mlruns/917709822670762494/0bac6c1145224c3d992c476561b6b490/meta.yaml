@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/917709822670762494/0bac6c1145224c3d992c476561b6b490/artifacts
+end_time: 1714329115935
+entry_point_name: ''
+experiment_id: '917709822670762494'
+lifecycle_stage: active
+run_id: 0bac6c1145224c3d992c476561b6b490
+run_name: google/vit-base-patch16-224_RandomForestClassifier_2024-04-28-20-31-33
+run_uuid: 0bac6c1145224c3d992c476561b6b490
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1714329093786
+status: 3
+tags: []
+user_id: RAZER
