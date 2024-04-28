@@ -41,6 +41,9 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from torchvision.datasets import ImageFolder
 
+# Pickle
+import pickle
+
 
 class FEClassifier(BaseClassifier, ABC):
     """
@@ -305,7 +308,7 @@ class FEClassifier(BaseClassifier, ABC):
     
     @abstractmethod
     def _get_random_images(self,
-                            n: int) -> Union[DataLoader, Dataset]:
+                           n: int) -> Union[DataLoader, Dataset]:
         """
         Get the first n images of a dataset
         param n {int} the number of images to get
@@ -313,6 +316,14 @@ class FEClassifier(BaseClassifier, ABC):
         """
 
         pass
+
+    def save_classifier(self) -> None:
+        """
+        Save the classifier model
+        """
+
+        with open(f"{self.output_dir}/{self.model_name}.pkl", "wb") as f:
+            pickle.dump(self.classifier_model, f)
 
 
 class TorchFEClassifier(FEClassifier):
