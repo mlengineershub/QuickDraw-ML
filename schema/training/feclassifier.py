@@ -407,7 +407,7 @@ class TorchFEClassifier(FEClassifier):
                         "labels": np.array(all_labels)}
     
     def _get_random_images(self, 
-                            n: int) -> DataLoader:
+                           n: int) -> DataLoader:
             """
             Get the first n images of a DataLoader
             param n {int} the number of images to get

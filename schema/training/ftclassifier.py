@@ -175,4 +175,3 @@ class TransformersFTClassifier(FTClassifier):
             data_collator=self.collate_fn,
             compute_metrics=self.stream_metrics
         )
-
