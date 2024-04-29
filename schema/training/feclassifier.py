@@ -6,6 +6,7 @@ from .baseclassifier import BaseClassifier, SklearnModel, TorchModel
 from abc import ABC, abstractmethod
 from datetime import datetime
 import pandas as pd
+import warnings
 import os
 import re
 from time import perf_counter
@@ -27,13 +28,14 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
+from sklearn.model_selection import cross_val_score
 
 # Transformers and datasets imports
 from transformers import AutoFeatureExtractor, AutoModel
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Literal, List, Tuple
 
 # PyTorch imports
 import torch
@@ -43,6 +45,11 @@ from torchvision.datasets import ImageFolder
 
 # Pickle
 import pickle
+
+# Optuna
+from optuna import create_study
+from optuna.samplers import TPESampler
+from optuna.trial import Trial
 
 
 class FEClassifier(BaseClassifier, ABC):
@@ -67,6 +74,7 @@ class FEClassifier(BaseClassifier, ABC):
                  seed: int) -> None:
         """
         The constructor of the FEClassifier class
+
         param embedding_model_name {str} the name of the embedding model
         param classifier_model {SklearnModel} the head classifier model
         param output_dir {str} the output directory
@@ -104,6 +112,7 @@ class FEClassifier(BaseClassifier, ABC):
                            **kwargs) -> None:
         """
         Set the training arguments
+
         param kwargs {Dict[str, Any]} the training arguments
         """
           
@@ -113,6 +122,7 @@ class FEClassifier(BaseClassifier, ABC):
     def _get_model_name(self) -> str:
         """
         Get the name of the classifier model
+
         return {str} the name of the classifier model
         """
 
@@ -122,6 +132,7 @@ class FEClassifier(BaseClassifier, ABC):
                         split: str) -> Dict[str, Any]:
         """
         Compute the metrics of the model for the given split
+
         param split {str} the split to compute the metrics on
         return {Dict[str, Any]} the metrics
         """
@@ -176,6 +187,7 @@ class FEClassifier(BaseClassifier, ABC):
                               split: str) -> plt.Figure:
         """
         Plot the confusion matrix of the model for the given split
+
         param split {str} the split to plot the confusion matrix on
         return {plt.Figure} the confusion matrix plot
         """    
@@ -257,6 +269,7 @@ class FEClassifier(BaseClassifier, ABC):
     def evaluate(self) -> Dict[str, Any]:
         """
         Evaluate the model and log the results in MLflow
+
         return {Dict[str, Any]} the metrics
         """
 
@@ -285,6 +298,104 @@ class FEClassifier(BaseClassifier, ABC):
 
         return metrics
     
+    def optimize(self,
+                 objective_metric: Literal["accuracy", "weighted_precision", 
+                                            "weighted_recall", "weighted_f1", 
+                                            "macro_precision", "macro_recall", 
+                                            "macro_f1", "micro_precision", 
+                                            "micro_recall", "micro_f1", 
+                                            "mcc"],
+                 params: Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]],
+                 cv: int,
+                 n_trials: int,
+                 n_jobs: int = -1) -> pd.DataFrame:
+        """
+        Optimize the classifier model using Optuna and cross-validation
+
+        param objective_metric {Literal["accuracy", "weighted_precision", 
+                    "weighted_recall", "weighted_f1", "macro_precision", ...]} the metric to maximize
+        param params {Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]} the parameters to optimize
+        param cv {int} the number of folds for cross-validation
+        param n_trials {int} the number of trials to run
+        param n_jobs {int} the number of jobs to run in parallel
+        return {pd.DataFrame} the results of the optimization
+
+        Example of params:
+        for a RandomForestClassifier model:
+            params = {
+                "n_estimators": (100, 1000),
+                "max_depth": (1, 10),
+                "min_samples_split": (2, 10),
+                "min_samples_leaf": (1, 10),
+                "max_features": ["auto", "sqrt", "log2"]
+            }
+        for a SVC model:
+            params = {
+                "C": (0.1, 1.0),
+                "kernel": ["linear", "poly", "rbf", "sigmoid"],
+                "degree": (1, 5),
+                "gamma": ["scale", "auto"],
+                "coef0": (0.0, 1.0)
+            }
+        """
+
+        print(f"Optimizing {len(params)} of a {self.classifier_model_name} model using {objective_metric} as the objective metric")
+
+        if isinstance(self.data, DatasetDict):
+            if "embeddings" not in self.data["train"].column_names:
+                print('No embeddings found, computing them')
+                self.embed()
+        elif isinstance(self.data, dict):
+            if "embeddings" not in self.data["train"]:
+                print('No embeddings found, computing them')
+                self.embed()
+
+        model = self.classifier_model.__class__(**self.classifier_model.get_params())
+
+        df_tmp = pd.DataFrame({"embeddings": np.concatenate([self.data["train"]["embeddings"], self.data["val"]["embeddings"]], axis=0),
+                               "labels": np.concatenate([self.data["train"]["labels"], self.data["val"]["labels"]], axis=0)})
+        
+        df_tmp = df_tmp.sample(frac=1, random_state=self.seed)
+
+        def objective(trial: Trial) -> float:
+            """
+            Objective function for the Optuna optimization
+
+            param trial {Trial} the trial to run
+            return {float} the mean of the cross-validation scores
+            """
+
+            trial_params = {}
+            for key, value in params.items():
+                try:
+                    if isinstance(value, tuple) and len(value) == 2:
+                        if all(isinstance(v, float) for v in value):
+                            trial_params[key] = trial.suggest_float(key, value[0], value[1], log=False)
+                        elif all(isinstance(v, int) for v in value):
+                            trial_params[key] = trial.suggest_int(key, value[0], value[1])
+                    elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                        trial_params[key] = trial.suggest_categorical(key, value)
+                    else:
+                        raise ValueError(f"Unsupported type or structure for parameter {key}: {value}")
+                except ValueError as e:
+                    warnings.warn(str(e))
+                    continue
+            
+            if len(trial_params) == 0:
+                raise ValueError("No valid parameters were provided to configure the model.")
+
+            model.set_params(**trial_params)
+            scores = cross_val_score(model, df_tmp["embeddings"].tolist(), df_tmp["labels"].tolist(), cv=cv, n_jobs=n_jobs, scoring=objective_metric)
+            
+            return scores.mean()
+
+        study = create_study(direction="maximize", sampler=TPESampler())
+        study.optimize(objective, n_trials=n_trials)
+
+        study_results = study.trials_dataframe()
+
+        return study_results
+
     @abstractmethod
     def embed(self,
               *args,
@@ -300,6 +411,7 @@ class FEClassifier(BaseClassifier, ABC):
                      batch) -> Dict[str, np.ndarray]:
             """
             Embed a batch of images
+
             param batch {List[PngImageFile]} the batch of images
             return {Dict[str, np.ndarray]} the embeddings
             """
@@ -311,6 +423,7 @@ class FEClassifier(BaseClassifier, ABC):
                            n: int) -> Union[DataLoader, Dataset]:
         """
         Get the first n images of a dataset
+
         param n {int} the number of images to get
         return {Union[DataLoader, Dataset]} the first n images from the image folder
         """
@@ -347,6 +460,7 @@ class TorchFEClassifier(FEClassifier):
                  **kwargs) -> None:
         """
         The constructor of the TorchFEClassifier class
+
         param embedding_model_name {str} the name of the embedding model
         param classifier_model {SklearnModel} the head classifier model
         param output_dir {str} the output directory
@@ -370,6 +484,7 @@ class TorchFEClassifier(FEClassifier):
                   label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
+
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices (here {})
         """
@@ -403,6 +518,7 @@ class TorchFEClassifier(FEClassifier):
                      batch: DataLoader) -> Dict[str, Union[np.ndarray, np.ndarray]]:
             """
             Embed a batch of images
+
             param data {DataLoader} the data to embed
             return {Dict[str, np.ndarray]} the embeddings
             """
@@ -421,6 +537,7 @@ class TorchFEClassifier(FEClassifier):
                            n: int) -> DataLoader:
             """
             Get the first n images of a DataLoader
+
             param n {int} the number of images to get
             return {DataLoader} the first n images from the image folder
             """
@@ -450,6 +567,7 @@ class TransformersFEClassifier(FEClassifier):
                  **kwargs) -> None:
         """
         The constructor of the TransformersFEClassifier class
+
         param embedding_model_name {str} the name of the embedding model
         param classifier_model {SklearnModel} the head classifier model
         param output_dir {str} the output directory
@@ -474,6 +592,7 @@ class TransformersFEClassifier(FEClassifier):
                   label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
+
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices
         """
@@ -504,6 +623,7 @@ class TransformersFEClassifier(FEClassifier):
                       batch) -> Dict[str, np.ndarray]:
         """
         Embed a batch of images
+
         param batch {List[PngImageFile]} the batch of images
         return {Dict[str, np.ndarray]} the embeddings
         """
@@ -525,6 +645,7 @@ class TransformersFEClassifier(FEClassifier):
                             n: int) -> Dataset:
         """
         Get the first n images of a dataset
+
         param n {int} the number of images to get
         return {Dataset} the first n images from the image folder
         """
