@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 # Helper library imports
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Sklearn imports
 from sklearn.ensemble import (
@@ -18,6 +19,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 # Transformers and datasets imports
+from transformers import TrainingArguments
 from datasets import DatasetDict
 
 # XGBoost import
@@ -76,7 +78,7 @@ class BaseClassifier(ABC):
     device: str
     seed: int
     data_path: str
-    training_args: Dict[str, Any]
+    training_args: Union[Dict[str, Any], TrainingArguments]
     data: DatasetDict
     label2idx: Dict[str, int]
     idx2label: Dict[int, str]
@@ -172,10 +174,14 @@ class BaseClassifier(ABC):
 
     @abstractmethod
     def compute_metrics(self,
+                        split: str,
                         *args,
-                        **kwargs) -> Dict[str, Any]:
+                        **kwargs) -> Dict[str, float]:
         """
         Compute the metrics of the model during training and evaluation
+
+        param split {str} the split to compute the metrics on
+        return {Dict[str, float]} the metrics of the model
         """
 
         pass
@@ -183,19 +189,33 @@ class BaseClassifier(ABC):
     @abstractmethod
     def evaluate(self,
                  *args,
-                 **kwargs) -> None:
+                 **kwargs) -> Dict[str, float]:
         """
         Evaluate the model and log the results in MLflow
+
+        return {Dict[str, float]} the metrics of the model
         """
 
         pass
 
     @abstractmethod
     def plot_confusion_matrix(self,
-                              *args,
-                              **kwargs) -> None:
+                              split: str) -> plt.Figure:
         """
         Plot the confusion matrix
+
+        param split {str} the split to plot the confusion matrix on
+        return {plt.Figure} the confusion matrix
+        """
+
+        pass
+
+    @abstractmethod
+    def save_classifier(self,
+                        *args,
+                        **kwargs) -> None:
+        """
+        Save the classifier model
         """
 
         pass

@@ -10,7 +10,7 @@ This README provides a detailed description of the folder's contents and clear i
 | Folder/Files       | Description                                                                  |
 |--------------------|------------------------------------------------------------------------------|
 | img/               | Folder containing the constructed images, separated by set and label.        |
-| size_10000/        | Initial JSON file with the coordinates of the images and their labels.       |
+| size_10000/  *(Not provided, ask to get it)*      | Initial JSON file with the coordinates of the images and their labels.       |
 | __init__.py        | File necessary for Python to treat the directory as a module.                |
 | dataset_builder.py | Script used to create the img/ folder.                                       |
 | labels.txt         | The selected labels.                                                         |

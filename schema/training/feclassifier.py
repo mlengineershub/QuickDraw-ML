@@ -129,12 +129,12 @@ class FEClassifier(BaseClassifier, ABC):
         return self._regex.match(str(self.classifier_model)).group(1)
     
     def compute_metrics(self,
-                        split: str) -> Dict[str, Any]:
+                        split: str) -> Dict[str, float]:
         """
         Compute the metrics of the model for the given split
 
         param split {str} the split to compute the metrics on
-        return {Dict[str, Any]} the metrics
+        return {Dict[str, float]} the metrics
         """
 
         metrics = {}
@@ -236,19 +236,7 @@ class FEClassifier(BaseClassifier, ABC):
                 self.classifier_model.fit(df_tmp["embeddings"].tolist(), df_tmp["labels"].tolist())
                 mlflow.log_params(self.training_args)
                 mlflow.log_metrics(self.compute_metrics("train"))
-                mlflow.log_metrics(self.compute_metrics("val"))
-
-                fig_train = self.plot_confusion_matrix("train")
-                train_confusion_matrix_path = "train_confusion_matrix.png"
-                fig_train.savefig(train_confusion_matrix_path)
-                mlflow.log_artifact(train_confusion_matrix_path)
-                os.remove(train_confusion_matrix_path)
-
-                fig_val = self.plot_confusion_matrix("val")
-                val_confusion_matrix_path = "val_confusion_matrix.png"
-                fig_val.savefig(val_confusion_matrix_path)
-                mlflow.log_artifact(val_confusion_matrix_path)
-                os.remove(val_confusion_matrix_path)
+                mlflow.log_metrics(self.compute_metrics("val")) 
 
                 if isinstance(self.data, DatasetDict):
                     mlflow.log_metrics({"train_length": len(self.data["train"]),
@@ -262,15 +250,14 @@ class FEClassifier(BaseClassifier, ABC):
                                         "num_labels": len(self.label2idx)})
 
         except Exception as e:
-            os.remove(train_confusion_matrix_path)
             self.run_name = None
             print(e)
     
-    def evaluate(self) -> Dict[str, Any]:
+    def evaluate(self) -> Dict[str, float]:
         """
         Evaluate the model and log the results in MLflow
 
-        return {Dict[str, Any]} the metrics
+        return {Dict[str, float]} the metrics
         """
 
         experiment = mlflow.get_experiment_by_name(self.evaluation_experiment_name)
@@ -283,11 +270,6 @@ class FEClassifier(BaseClassifier, ABC):
         with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
             metrics = self.compute_metrics("test")
             mlflow.log_metrics(metrics=metrics)
-            fig_test = self.plot_confusion_matrix("test")
-            test_confusion_matrix_path = "test_confusion_matrix.png"
-            fig_test.savefig(test_confusion_matrix_path)
-            mlflow.log_artifact(test_confusion_matrix_path)
-            os.remove(test_confusion_matrix_path)
 
             if isinstance(self.data, DatasetDict):
                 mlflow.log_metrics({"test_length": len(self.data["test"]),

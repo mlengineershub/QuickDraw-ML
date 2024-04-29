@@ -29,7 +29,13 @@ from sklearn.metrics import (
 )
 
 # Transformers and datasets imports
-from transformers import AutoFeatureExtractor, AutoModelForImageClassification, TrainingArguments, Trainer
+from transformers import (
+    AutoFeatureExtractor,
+    AutoModelForImageClassification,
+    Trainer,
+    TrainingArguments,
+    EvalPrediction
+)
 from datasets import Dataset, DatasetDict
 
 # Typing imports
@@ -48,6 +54,9 @@ class FTClassifier(BaseClassifier, ABC):
     classification tasks
     """
 
+    experiment_name = "Fine_Tuning"
+    model: Any
+
     
     def __init__(self,
                  model_name: str, 
@@ -57,6 +66,12 @@ class FTClassifier(BaseClassifier, ABC):
                  seed: int) -> None:
         """
         Constructor for the FTClassifier class
+
+        param model_name {str} the name of the model
+        param output_dir {str} the output directory
+        param device {str} the device to use
+        param data_path {str} the path to the data
+        param seed {int} the seed to use
         """
 
         super().__init__(model_name, 
@@ -65,6 +80,18 @@ class FTClassifier(BaseClassifier, ABC):
                          data_path, 
                          {}, 
                          seed)
+
+    def _set_device(self) -> None:
+        """
+        Set the device to use
+        """
+        
+        try:
+            self.model.to(self.device)
+        except:
+            print(f"Device {self.device} not found, using cpu instead")
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.model.to(self.device)
 
     
 class TransformersFTClassifier(FTClassifier):
@@ -122,6 +149,7 @@ class TransformersFTClassifier(FTClassifier):
                   label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
+
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices (not used here)
         """
@@ -142,17 +170,38 @@ class TransformersFTClassifier(FTClassifier):
         self.data = datasets.with_transform(self.__transform)
 
     @staticmethod
-    def stream_metrics(preds: torch.Tensor) -> Dict[str, Any]:
+    def stream_metrics(preds: EvalPrediction) -> Dict[str, float]:
         """
         Compute the metrics of the model during training and evaluation
+
+        param preds {EvalPrediction} the predictions of the model
+        return {Dict[str, float]} the metrics of the model
         """
 
-        pass
+        labels = preds.label_ids
+        preds = preds.predictions.argmax(-1)
+
+        metrics = {
+            "accuracy": accuracy_score(labels, preds),
+            "weighted_precision": precision_score(labels, preds, average="weighted"),
+            "weighted_recall": recall_score(labels, preds, average="weighted"),
+            "weighted_f1": f1_score(labels, preds, average="weighted"),
+            "macro_precision": precision_score(labels, preds, average="macro"),
+            "macro_recall": recall_score(labels, preds, average="macro"),
+            "macro_f1": f1_score(labels, preds, average="macro"),
+            "micro_precision": precision_score(labels, preds, average="micro"),
+            "micro_recall": recall_score(labels, preds, average="micro"),
+            "micro_f1": f1_score(labels, preds, average="micro"),
+            "mcc": matthews_corrcoef(labels, preds)
+        }
+        
+        return metrics
     
     def _set_training_args(self,
                            **kwargs) -> None:
         """
         Set the training arguments
+
         param kwargs {Dict[str, Any]} the training arguments for Vision Transformer
         """
 
@@ -175,3 +224,100 @@ class TransformersFTClassifier(FTClassifier):
             data_collator=self.collate_fn,
             compute_metrics=self.stream_metrics
         )
+
+    def compute_metrics(self,
+                        split: str) -> Dict[str, float]:
+        """
+        Compute the metrics of the model for the given split
+
+        param split {str} the split to compute the metrics for
+        return {Dict[str, float]} the metrics of the model
+        """
+
+        metrics = self.trainer.evaluate(eval_dataset=self.data[split])
+
+        time = metrics.pop("eval_runtime") / len(self.data[split])
+        metrics = {re.sub(r"eval", split, key): value for key, value in metrics.items()}
+
+        metrics[split + "_time"] = time
+
+        return metrics
+    
+
+    def train(self) -> None:
+        """
+        Train the model
+        """
+
+        experiment = mlflow.get_experiment_by_name(self.experiment_name)
+        if experiment is None:
+            print(f"Creating experiment: {self.experiment_name}")
+            experiment_id = mlflow.create_experiment(self.experiment_name)
+        else:
+            print(f"Using MLflow experiment: {self.experiment_name}")
+            experiment_id = experiment.experiment_id
+
+        self.run_name = f"{self.model_name}_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
+
+        with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
+            self.trainer.train()
+            mlflow.log_params(self.training_args.to_dict())
+            mlflow.log_metrics(self.compute_metrics('train'))
+            mlflow.log_metrics(self.compute_metrics('val'))
+            
+            mlflow.log_metrics({'train_length': len(self.data['train']),
+                                'val_length': len(self.data['val']),
+                                'test_length': len(self.data['test']),
+                                'num_labels': len(self.label2idx)})
+    
+    def evaluate(self) -> Dict[str, float]:
+        """
+        Evaluate the model and log the results in MLflow
+
+        return {Dict[str, float]} the metrics
+        """
+
+        experiment = mlflow.get_experiment_by_name(self.evaluation_experiment_name)
+        if experiment is None:
+            print(f"Creating MLflow experiment: {self.evaluation_experiment_name}")
+            experiment_id = mlflow.create_experiment(self.evaluation_experiment_name)
+        else:
+            experiment_id = experiment.experiment_id
+
+        with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
+            metrics = self.compute_metrics('test')
+            mlflow.log_metrics(metrics)
+            mlflow.log_metrics({'test_length': len(self.data['test']),
+                                'num_labels': len(self.label2idx)})
+            
+        return metrics
+
+    def plot_confusion_matrix(self,
+                              split: str) -> plt.Figure:
+        """
+        Plot the confusion matrix of the model for the given split
+
+        param split {str} the split to plot the confusion matrix on
+        return {plt.Figure} the confusion matrix plot
+        """
+
+        preds = self.trainer.predict(self.data[split])
+
+        labels = preds.label_ids
+        preds = preds.predictions.argmax(-1)
+
+        cm = confusion_matrix(labels, preds)
+
+        plt.figure(figsize=(12, 8))
+        sns.heatmap(cm, annot=False, fmt=".2f", cmap="Blues", xticklabels=self.idx2label.values(), yticklabels=self.idx2label.values())
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+        plt.title(f"{split.capitalize()} Confusion Matrix")
+        plt.show()
+
+    def save_classifier(self) -> None:
+        """
+        Save the classifier model
+        """
+
+        self.trainer.save_model(self.output_dir)
