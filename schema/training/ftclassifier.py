@@ -239,7 +239,7 @@ class TransformersFTClassifier(FTClassifier):
         time = metrics.pop("eval_runtime") / len(self.data[split])
         metrics = {re.sub(r"eval", split, key): value for key, value in metrics.items()}
 
-        metrics[split + "_time"] = time
+        metrics[split + "_inference_time"] = time
 
         return metrics
     
