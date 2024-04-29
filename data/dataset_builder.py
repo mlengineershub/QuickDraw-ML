@@ -9,6 +9,7 @@ import argparse
 def data_to_img(o: Dict) -> Image:
     """
     Return an image from a drawing object (usually object["drawing in the point list"])
+    
     @param o {dict} the object from the dataset
     @return {Image} a PIL Image of size (3, 256, 256)
     """

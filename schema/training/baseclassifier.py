@@ -94,6 +94,7 @@ class BaseClassifier(ABC):
 
         """
         The constructor of the BaseClassifier class
+
         param moel_name {str} the name of the model
         param output_dir {str} the output directory
         param device {str} the device to use
@@ -142,6 +143,7 @@ class BaseClassifier(ABC):
                   **kwargs) -> None:
         """
         Set the data to use
+        
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices
         """
