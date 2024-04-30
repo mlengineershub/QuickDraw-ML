@@ -1,5 +1,5 @@
 # local imports
-from .baseclassifier import BaseClassifier, SklearnModel, TorchModel
+from .baseclassifier import BaseClassifier, TorchModel
 
 # external imports
 # Standard library imports
@@ -55,8 +55,7 @@ class FTClassifier(BaseClassifier, ABC):
     """
 
     experiment_name = "Fine_Tuning"
-    model: Any
-
+    model: Union[TorchModel, AutoModelForImageClassification]
     
     def __init__(self,
                  model_name: str, 
@@ -99,6 +98,8 @@ class TransformersFTClassifier(FTClassifier):
     This class aims to classify images using a Vision Transformer model(ViT) for feature extraction
     """
 
+    feature_extractor: AutoFeatureExtractor
+
     def __init__(self,
                  model_name: str,
                  output_dir: str,
@@ -117,7 +118,6 @@ class TransformersFTClassifier(FTClassifier):
                          data_path, 
                          seed)
         
-        self.model.label2id = self.label2idx
     
     @staticmethod
     def collate_fn(batch: Dict[str, Any]) -> Dict[str, Any]:
@@ -161,6 +161,7 @@ class TransformersFTClassifier(FTClassifier):
         assert data_train.class_to_idx == data_val.class_to_idx == data_test.class_to_idx
 
         self.label2idx = data_train.class_to_idx
+        self.idx2label = {v: k for k, v in self.label2idx.items()}
 
         datasets = DatasetDict({
             split: Dataset.from_dict({"image": [image for image, _ in data], "labels": [label for _, label in data]})
@@ -209,7 +210,7 @@ class TransformersFTClassifier(FTClassifier):
                                                                      ignore_mismatched_sizes=True,
                                                                      num_labels=len(self.label2idx),
                                                                      label2id=self.label2idx,
-                                                                     id2label={v: k for k, v in self.label2idx.items()})
+                                                                     id2label=self.idx2label)
         
         self.training_args = TrainingArguments(
             output_dir=self.output_dir,
@@ -240,6 +241,8 @@ class TransformersFTClassifier(FTClassifier):
         metrics = {re.sub(r"eval", split, key): value for key, value in metrics.items()}
 
         metrics[split + "_inference_time"] = time
+
+        self.metrics.update(metrics)
 
         return metrics
     
