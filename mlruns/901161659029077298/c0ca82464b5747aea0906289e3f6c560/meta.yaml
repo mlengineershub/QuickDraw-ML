@@ -1,5 +1,5 @@
 artifact_uri: file:///teamspace/studios/this_studio/QuickDraw-ML/mlruns/901161659029077298/c0ca82464b5747aea0906289e3f6c560/artifacts
-end_time: null
+end_time: 1714579085616
 entry_point_name: ''
 experiment_id: '901161659029077298'
 lifecycle_stage: active
@@ -10,6 +10,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1714577200096
-status: 1
+status: 4
 tags: []
 user_id: RAZER
