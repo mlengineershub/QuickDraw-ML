@@ -1,0 +1,15 @@
+artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/701987066803496648/3beae182307e4b8b90f64b7978b66c5a/artifacts
+end_time: 1714575183266
+entry_point_name: ''
+experiment_id: '701987066803496648'
+lifecycle_stage: active
+run_id: 3beae182307e4b8b90f64b7978b66c5a
+run_name: google/vit-base-patch16-224-in21k_2024-05-01-16-35-42
+run_uuid: 3beae182307e4b8b90f64b7978b66c5a
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1714575162539
+status: 3
+tags: []
+user_id: RAZER

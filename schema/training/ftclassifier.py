@@ -30,7 +30,8 @@ from sklearn.metrics import (
 
 # Transformers and datasets imports
 from transformers import (
-    AutoFeatureExtractor,
+    AutoImageProcessor,
+    # AutoFeatureExtractor,
     AutoModelForImageClassification,
     Trainer,
     TrainingArguments,
@@ -62,7 +63,8 @@ class FTClassifier(BaseClassifier, ABC):
                  output_dir: str,
                  device: str,
                  data_path: str,
-                 seed: int) -> None:
+                 seed: int,
+                 **kwargs) -> None:
         """
         Constructor for the FTClassifier class
 
@@ -78,7 +80,8 @@ class FTClassifier(BaseClassifier, ABC):
                          device, 
                          data_path, 
                          {}, 
-                         seed)
+                         seed,
+                         **kwargs)
 
     def _set_device(self) -> None:
         """
@@ -98,25 +101,33 @@ class TransformersFTClassifier(FTClassifier):
     This class aims to classify images using a Vision Transformer model(ViT) for feature extraction
     """
 
-    feature_extractor: AutoFeatureExtractor
+    feature_extractor: AutoImageProcessor
 
     def __init__(self,
                  model_name: str,
                  output_dir: str,
                  device: str,
                  data_path: str,
-                 seed: int) -> None:
+                 seed: int,
+                 **kwargs) -> None:
         """
         Constructor for the TransformersFTClassifier class
+
+        param model_name {str} the name of the model
+        param output_dir {str} the output directory
+        param device {str} the device to use
+        param data_path {str} the path to the data
+        param seed {int} the seed to use
         """
 
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+        self.feature_extractor = AutoImageProcessor.from_pretrained(model_name)
 
         super().__init__(model_name, 
                          output_dir, 
                          device, 
                          data_path, 
-                         seed)
+                         seed,
+                         **kwargs)
         
     
     @staticmethod
@@ -126,7 +137,7 @@ class TransformersFTClassifier(FTClassifier):
         """
 
         return {
-            'pixel_values': torch.stack(x['pixel_values'] for x in batch),
+            'pixel_values': torch.stack([x['pixel_values'] for x in batch]),
             'labels': torch.tensor([x['labels'] for x in batch])
         }
     
@@ -226,6 +237,7 @@ class TransformersFTClassifier(FTClassifier):
             train_dataset=self.data['train'],
             eval_dataset=self.data['val'],
             data_collator=self.collate_fn,
+            tokenizer=self.feature_extractor,
             compute_metrics=self.stream_metrics
         )
 

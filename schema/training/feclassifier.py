@@ -71,7 +71,8 @@ class FEClassifier(BaseClassifier, ABC):
                  data_path: str,
                  label2idx: Dict[str, int],
                  device: str,
-                 seed: int) -> None:
+                 seed: int,
+                 **kwargs) -> None:
         """
         The constructor of the FEClassifier class
 
@@ -94,13 +95,14 @@ class FEClassifier(BaseClassifier, ABC):
                          data_path=data_path,
                          label2idx=label2idx,
                          device=device,
-                         seed=seed)
+                         seed=seed,
+                         **kwargs)
             
     def _set_device(self) -> None:
         """
         Set the device to use
         """
-        
+
         try:
             self.embedding_model.to(self.device)
         except:

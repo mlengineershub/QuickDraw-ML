@@ -92,7 +92,8 @@ class BaseClassifier(ABC):
                  device: str,
                  data_path: str,
                  label2idx: Dict[str, int],
-                 seed: int) -> None:
+                 seed: int,
+                 **kwargs) -> None:
 
         """
         The constructor of the BaseClassifier class
@@ -113,7 +114,7 @@ class BaseClassifier(ABC):
 
         self._set_seed()
         self._set_data(data_path, label2idx)
-        self._set_training_args()
+        self._set_training_args(**kwargs)
         self._set_device()
 
         self.metrics = {}
