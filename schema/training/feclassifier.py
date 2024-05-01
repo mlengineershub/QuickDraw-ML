@@ -35,7 +35,7 @@ from transformers import AutoFeatureExtractor, AutoModel
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union, Callable, List, Tuple
+from typing import Any, Dict, Union, Callable, List, Tuple, Literal
 
 # PyTorch imports
 import torch
@@ -282,7 +282,7 @@ class FEClassifier(BaseClassifier, ABC):
     
     def optimize(self,
                  objective_metric: Callable[[Any, Any], float],
-                 direction: str,
+                 direction: Literal["maximize", "minimize"],
                  params: Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]],
                  cv: int,
                  n_trials: int,
