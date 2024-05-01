@@ -35,7 +35,7 @@ from transformers import AutoFeatureExtractor, AutoModel
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union, Literal, List, Tuple
+from typing import Any, Dict, Union, Callable, List, Tuple
 
 # PyTorch imports
 import torch
@@ -281,12 +281,8 @@ class FEClassifier(BaseClassifier, ABC):
         return metrics
     
     def optimize(self,
-                 objective_metric: Literal["accuracy", "weighted_precision", 
-                                            "weighted_recall", "weighted_f1", 
-                                            "macro_precision", "macro_recall", 
-                                            "macro_f1", "micro_precision", 
-                                            "micro_recall", "micro_f1", 
-                                            "mcc"],
+                 objective_metric: Callable[[Any, Any], float],
+                 direction: str,
                  params: Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]],
                  cv: int,
                  n_trials: int,
@@ -294,8 +290,8 @@ class FEClassifier(BaseClassifier, ABC):
         """
         Optimize the classifier model using Optuna and cross-validation
 
-        param objective_metric {Literal["accuracy", "weighted_precision", 
-                    "weighted_recall", "weighted_f1", "macro_precision", ...]} the metric to maximize
+        param objective_metric {Callable[[Any, Any], float]} the objective metric to optimize
+        param direction {str} the direction to optimize the objective metric
         param params {Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]} the parameters to optimize
         param cv {int} the number of folds for cross-validation
         param n_trials {int} the number of trials to run
@@ -367,11 +363,16 @@ class FEClassifier(BaseClassifier, ABC):
                 raise ValueError("No valid parameters were provided to configure the model.")
 
             model.set_params(**trial_params)
-            scores = cross_val_score(model, df_tmp["embeddings"].tolist(), df_tmp["labels"].tolist(), cv=cv, n_jobs=n_jobs, scoring=objective_metric)
+            scores = cross_val_score(model, 
+                                     df_tmp["embeddings"].tolist(), 
+                                     df_tmp["labels"].tolist(), 
+                                     cv=cv, 
+                                     n_jobs=n_jobs, 
+                                     scoring=objective_metric)
             
             return scores.mean()
 
-        study = create_study(direction="maximize", sampler=TPESampler())
+        study = create_study(direction=direction, sampler=TPESampler(seed=self.seed))
         study.optimize(objective, n_trials=n_trials)
 
         study_results = study.trials_dataframe()
