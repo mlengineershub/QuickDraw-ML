@@ -55,14 +55,14 @@ SklearnModel = Union[GaussianNB,
 
 
 TorchModel = Union[ResNet,
-                    VGG,
-                    DenseNet,
-                    AlexNet,
-                    SqueezeNet,
-                    GoogLeNet,
-                    ShuffleNetV2,
-                    MobileNetV2,
-                    MobileNetV3]
+                   VGG,
+                   DenseNet,
+                   AlexNet,
+                   SqueezeNet,
+                   GoogLeNet,
+                   ShuffleNetV2,
+                   MobileNetV2,
+                   MobileNetV3]
 
 
 class BaseClassifier(ABC):
@@ -105,6 +105,14 @@ class BaseClassifier(ABC):
         param label2idx {Dict[str, int]} the mapping of labels to indices
         param seed {int} the seed to use
         """
+
+        self.data = None
+        self.label2idx = None
+        self.idx2label = None
+        self.run_name = None
+        self.experiment_name = None
+        self.training_args = None
+        self.metrics = {}
         
         self.model_name = model_name
         self.output_dir = output_dir
@@ -117,7 +125,6 @@ class BaseClassifier(ABC):
         self._set_training_args(**kwargs)
         self._set_device()
 
-        self.metrics = {}
     
     def _set_seed(self) -> None:
         """
@@ -141,9 +148,7 @@ class BaseClassifier(ABC):
     @abstractmethod
     def _set_data(self, 
                   data_path: str,
-                  label2idx: Dict[str, int],
-                  *args,
-                  **kwargs) -> None:
+                  label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
         
@@ -155,7 +160,6 @@ class BaseClassifier(ABC):
 
     @abstractmethod
     def _set_training_args(self,
-                           *args,
                            **kwargs) -> None:
         """
         Set the training arguments
@@ -164,9 +168,7 @@ class BaseClassifier(ABC):
         pass
 
     @abstractmethod
-    def train(self,
-              *args,
-              **kwargs) -> None:
+    def train(self) -> None:
         """
         Train the model and log the results in MLflow
         """
@@ -175,9 +177,7 @@ class BaseClassifier(ABC):
 
     @abstractmethod
     def compute_metrics(self,
-                        split: str,
-                        *args,
-                        **kwargs) -> Dict[str, float]:
+                        split: str) -> Dict[str, float]:
         """
         Compute the metrics of the model during training and evaluation
 
@@ -188,9 +188,7 @@ class BaseClassifier(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self,
-                 *args,
-                 **kwargs) -> Dict[str, float]:
+    def evaluate(self) -> Dict[str, float]:
         """
         Evaluate the model and log the results in MLflow
 
@@ -212,9 +210,7 @@ class BaseClassifier(ABC):
         pass
 
     @abstractmethod
-    def save_classifier(self,
-                        *args,
-                        **kwargs) -> None:
+    def save_classifier(self) -> None:
         """
         Save the classifier model
         """

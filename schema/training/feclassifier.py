@@ -382,9 +382,7 @@ class FEClassifier(BaseClassifier, ABC):
         return study_results
 
     @abstractmethod
-    def embed(self,
-              *args,
-              **kwargs) -> None:
+    def embed(self) -> None:
         """
         Embed the images of the dataset
         """
@@ -605,7 +603,7 @@ class TransformersFEClassifier(FEClassifier):
         self.data = DatasetDict(data)
     
     def _embed_batch(self, 
-                      batch) -> Dict[str, np.ndarray]:
+                     batch) -> Dict[str, np.ndarray]:
         """
         Embed a batch of images
 

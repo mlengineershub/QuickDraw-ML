@@ -1,8 +1,9 @@
 artifact_uri: file:///home/v8/Desktop/QuickDraw-ML/mlruns/701987066803496648/48361ab5ebe34797b19c4f4a89f3004c/artifacts
+deleted_time: 1714592088034
 end_time: 1712680998809
 entry_point_name: ''
 experiment_id: '701987066803496648'
-lifecycle_stage: active
+lifecycle_stage: deleted
 run_id: 48361ab5ebe34797b19c4f4a89f3004c
 run_name: google/vit-base-patch16-224_GaussianNB_evaluation_2024-04-09-18-43-17
 run_uuid: 48361ab5ebe34797b19c4f4a89f3004c

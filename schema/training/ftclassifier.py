@@ -1,22 +1,15 @@
 # local imports
-from .baseclassifier import BaseClassifier, TorchModel
+from .baseclassifier import BaseClassifier
 
 # external imports
 # Standard library imports
-from abc import ABC, abstractmethod
 from datetime import datetime
-import pandas as pd
-import os
 import re
-from time import perf_counter
 
 # Helper library imports
 import matplotlib.pyplot as plt
 import mlflow
-import numpy as np
 import seaborn as sns
-from PIL import Image
-from tqdm.auto import tqdm
 
 # Sklearn imports
 from sklearn.metrics import (
@@ -39,23 +32,23 @@ from transformers import (
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union, Optional
+from typing import Any, Dict
 
 # PyTorch imports
 import torch
-from torch.utils.data import DataLoader
-from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 from torchvision.datasets import ImageFolder
 
 
-class FTClassifier(BaseClassifier, ABC):
+class FTClassifier(BaseClassifier):
     """
-    This class defines the methods that a Vision Transformer model should implement for performing
-    classification tasks
+    This class aims to fine-tune a pre-trained model for image classification.
+    It can fine-tune any model from the Hugging Face model hub.
     """
 
     experiment_name = "Fine_Tuning"
-    model: Union[TorchModel, AutoModelForImageClassification]
+    
+    model: AutoModelForImageClassification
+    image_processor: AutoImageProcessor
     
     def __init__(self,
                  model_name: str, 
@@ -73,6 +66,8 @@ class FTClassifier(BaseClassifier, ABC):
         param data_path {str} the path to the data
         param seed {int} the seed to use
         """
+
+        self.image_processor = AutoImageProcessor.from_pretrained(model_name)
 
         super().__init__(model_name, 
                          output_dir, 
@@ -94,41 +89,6 @@ class FTClassifier(BaseClassifier, ABC):
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model.to(self.device)
 
-    
-class TransformersFTClassifier(FTClassifier):
-    """
-    This class aims to classify images using a Vision Transformer model(ViT) for feature extraction
-    """
-
-    image_processor: AutoImageProcessor
-
-    def __init__(self,
-                 model_name: str,
-                 output_dir: str,
-                 device: str,
-                 data_path: str,
-                 seed: int,
-                 **kwargs) -> None:
-        """
-        Constructor for the TransformersFTClassifier class
-
-        param model_name {str} the name of the model
-        param output_dir {str} the output directory
-        param device {str} the device to use
-        param data_path {str} the path to the data
-        param seed {int} the seed to use
-        """
-
-        self.image_processor = AutoImageProcessor.from_pretrained(model_name)
-
-        super().__init__(model_name, 
-                         output_dir, 
-                         device, 
-                         data_path, 
-                         seed,
-                         **kwargs)
-        
-    
     @staticmethod
     def collate_fn(batch: Dict[str, Any]) -> Dict[str, Any]:
         """

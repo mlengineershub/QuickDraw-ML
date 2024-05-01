@@ -7,3 +7,7 @@ mlflow==2.12.1
 datasets==2.14.7
 optuna==3.6.1
 accelerate==0.29.3
+optimum==1.19.1
+evaluate==0.4.2
+onnx==1.16.0
+onnxruntime==1.17.3
