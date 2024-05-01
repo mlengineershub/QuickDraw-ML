@@ -31,7 +31,6 @@ from sklearn.metrics import (
 # Transformers and datasets imports
 from transformers import (
     AutoImageProcessor,
-    # AutoFeatureExtractor,
     AutoModelForImageClassification,
     Trainer,
     TrainingArguments,
@@ -101,7 +100,7 @@ class TransformersFTClassifier(FTClassifier):
     This class aims to classify images using a Vision Transformer model(ViT) for feature extraction
     """
 
-    feature_extractor: AutoImageProcessor
+    image_processor: AutoImageProcessor
 
     def __init__(self,
                  model_name: str,
@@ -120,7 +119,7 @@ class TransformersFTClassifier(FTClassifier):
         param seed {int} the seed to use
         """
 
-        self.feature_extractor = AutoImageProcessor.from_pretrained(model_name)
+        self.image_processor = AutoImageProcessor.from_pretrained(model_name)
 
         super().__init__(model_name, 
                          output_dir, 
@@ -150,7 +149,7 @@ class TransformersFTClassifier(FTClassifier):
         return {Dict[str, Any]} the processed and converted images
         """
 
-        inputs = self.feature_extractor([x for x in example_batch['image']],
+        inputs = self.image_processor([x for x in example_batch['image']],
                                         return_tensors='pt')
         
         inputs['labels'] = example_batch['labels']
@@ -237,7 +236,7 @@ class TransformersFTClassifier(FTClassifier):
             train_dataset=self.data['train'],
             eval_dataset=self.data['val'],
             data_collator=self.collate_fn,
-            tokenizer=self.feature_extractor,
+            tokenizer=self.image_processor,
             compute_metrics=self.stream_metrics
         )
 
