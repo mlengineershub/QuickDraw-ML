@@ -131,9 +131,12 @@ class TransformersFTClassifier(FTClassifier):
         }
     
     def __transform(self,
-                  example_batch: Dict[str, Any]) -> Dict[str, Any]:
+                    example_batch: Dict[str, Any]) -> Dict[str, Any]:
         """
         This method transforms the data with the feature extractor
+
+        param example_batch {Dict[str, Any]} the input batch of images
+        return {Dict[str, Any]} the processed and converted images
         """
 
         inputs = self.feature_extractor([x for x in example_batch['image']],
