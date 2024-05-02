@@ -110,7 +110,6 @@ class BaseClassifier(ABC):
         self.label2idx = None
         self.idx2label = None
         self.run_name = None
-        self.experiment_name = None
         self.training_args = None
         self.metrics = {}
         
