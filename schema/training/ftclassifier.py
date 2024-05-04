@@ -226,7 +226,7 @@ class FTClassifier(BaseClassifier):
         Train the model
         """
 
-        experiment = mlflow.get_experiment_by_name(self.experiment_name)
+        experiment = mlflow.get_experiment_by_name(FTClassifier.experiment_name)
         if experiment is None:
             print(f"Creating experiment: {self.experiment_name}")
             experiment_id = mlflow.create_experiment(self.experiment_name)

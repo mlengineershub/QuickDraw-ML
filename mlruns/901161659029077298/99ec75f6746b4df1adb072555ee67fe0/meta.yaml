@@ -1,0 +1,15 @@
+artifact_uri: file:///teamspace/studios/this_studio/QuickDraw-ML/mlruns/901161659029077298/99ec75f6746b4df1adb072555ee67fe0/artifacts
+end_time: 1714821796374
+entry_point_name: ''
+experiment_id: '901161659029077298'
+lifecycle_stage: active
+run_id: 99ec75f6746b4df1adb072555ee67fe0
+run_name: microsoft/resnet-50_2024-05-04-13-19-22
+run_uuid: 99ec75f6746b4df1adb072555ee67fe0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1714821562451
+status: 4
+tags: []
+user_id: opop
