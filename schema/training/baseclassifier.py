@@ -26,7 +26,7 @@ from datasets import DatasetDict
 from xgboost import XGBClassifier
 
 # Typing imports
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Final, final
 
 # PyTorch imports
 import torch
@@ -71,7 +71,7 @@ class BaseClassifier(ABC):
     Either a feature extraction classifier, fine tuning classifier...
     """
 
-    evaluation_experiment_name = "Benchmark"
+    evaluation_experiment_name: Final[str] = "evaluation"
 
     model_name: str
     output_dir: str
@@ -124,7 +124,7 @@ class BaseClassifier(ABC):
         self._set_training_args(**kwargs)
         self._set_device()
 
-    
+    @final    
     def _set_seed(self) -> None:
         """
         Set the seed for reproducibility

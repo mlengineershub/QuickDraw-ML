@@ -35,7 +35,7 @@ from transformers import AutoFeatureExtractor, AutoModel
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union, Callable, List, Tuple, Literal
+from typing import Any, Dict, Union, Callable, List, Tuple, Literal, Final, final
 
 # PyTorch imports
 import torch
@@ -57,7 +57,7 @@ class FEClassifier(BaseClassifier, ABC):
     This class defines the methods that a classifier using feature extraction should implement
     """
 
-    _regex = re.compile(r"(.+?)\(")
+    _regex: Final[re.Pattern] = re.compile(r"(.+?)\(")
 
     embedding_model_name: str
     classifier_model_name: str
@@ -282,6 +282,7 @@ class FEClassifier(BaseClassifier, ABC):
 
         return metrics
     
+    @final
     def optimize(self,
                  objective_metric: Callable[[Any, Any], float],
                  direction: Literal["maximize", "minimize"],
