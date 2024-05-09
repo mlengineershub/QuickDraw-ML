@@ -5,18 +5,18 @@ In this folder, you will find the selected data and the undersampling performed 
 This README provides a detailed description of the folder's contents and clear instructions for using the `dataset_builder.py` script.
 
 
-## Contents of [/data](.)
+## Contents of [`/data`](.)
 
 | Folder/Files       | Description                                                                  |
 |--------------------|------------------------------------------------------------------------------|
-| img/               | Folder containing the constructed images, separated by set and label.        |
-| size_10000/  *(Not provided, ask to get it)*      | Initial JSON file with the coordinates of the images and their labels.       |
-| __init__.py        | File necessary for Python to treat the directory as a module.                |
-| dataset_builder.py | Script used to create the img/ folder.                                       |
-| labels.txt         | The selected labels.                                                         |
-| README.md          | File explaining the contents of the folder.                                  |
+| `img/`               | Folder containing the constructed images, separated by set and label.        |
+| `size_10000/`  *(Not provided, ask to get it)*      | Initial JSON file with the coordinates of the images and their labels.       |
+| `__init__.py`        | File necessary for Python to treat the directory as a module.                |
+| `dataset_builder.py` | Script used to create the img/ folder.                                       |
+| `labels.txt`         | The selected labels.                                                         |
+| `README.md`          | File explaining the contents of the folder.                                  |
 
-## Usage Guide for `dataset_builder.py`
+## Usage Guide for [`dataset_builder.py`](./dataset_builder.py)
 
 This file is used to create our training, testing, and validation datasets.
 
