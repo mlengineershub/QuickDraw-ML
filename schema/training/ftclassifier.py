@@ -32,7 +32,7 @@ from transformers import (
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict
+from typing import Any, Dict, Final
 
 # PyTorch imports
 import torch
@@ -45,7 +45,7 @@ class FTClassifier(BaseClassifier):
     It can fine-tune any model from the Hugging Face model hub.
     """
 
-    experiment_name = "Fine_Tuning"
+    experiment_name: Final[str] = "Fine_Tuning"
     
     model: AutoModelForImageClassification
     image_processor: AutoImageProcessor

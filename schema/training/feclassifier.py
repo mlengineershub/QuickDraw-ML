@@ -58,6 +58,7 @@ class FEClassifier(BaseClassifier, ABC):
     """
 
     _regex: Final[re.Pattern] = re.compile(r"(.+?)\(")
+    experiment_name: Final[str] = "Feature_Extraction"
 
     embedding_model_name: str
     classifier_model_name: str
@@ -85,7 +86,6 @@ class FEClassifier(BaseClassifier, ABC):
         param seed {int} the seed to use
         """
         
-        self.experiment_name = "Feature_Extraction"
         self.classifier_model = classifier_model
         self.classifier_model_name = self._get_model_name()
         self.embedding_model_name = embedding_model_name
@@ -221,7 +221,7 @@ class FEClassifier(BaseClassifier, ABC):
             print('No embeddings found, computing them')
             self.embed()
 
-        experiment = mlflow.get_experiment_by_name(self.experiment_name)
+        experiment = mlflow.get_experiment_by_name(FEClassifier.experiment_name)
         if experiment is None:
             print(f"Creating MLflow experiment: {self.experiment_name}")
             experiment_id = mlflow.create_experiment(self.experiment_name)
