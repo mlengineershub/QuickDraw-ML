@@ -11,8 +11,8 @@ def data_to_img(o: Dict) -> Image:
     Return an image from a drawing object
     (usually object["drawing in the point list"])
 
-    @param o {dict} the object from the dataset
-    @return {Image} a PIL Image of size (3, 256, 256)
+    param o {dict} the object from the dataset
+    return {Image} a PIL Image of size (3, 256, 256)
     """
 
     cord = o["drawing"]
@@ -42,19 +42,19 @@ def json_to_img(json_folder: str,
                 val_size: float = 0.2) -> None:
     """
     Create images from json files and split into train, test, and validation
-    sets without using sklearn.
+    sets without using sklearn
 
-    @param json_folder {str} - The folder containing the json files.
-    @param output_folder {str} - The folder where the images will be saved.
-    @param max_img {int} - The number of images to save per json file.
-    @param labels {Optional[List[str]]} - The labels to consider,
-                                          None for all labels.
-    @param delete_on_error {bool} - Delete the output folder if an error
-                                    occurs.
-    @param test_size {float} - The proportion of the dataset to include in the
-                               test split.
-    @param val_size {float} - The proportion of the dataset to include in the
-                              validation split.
+    param json_folder {str} the folder containing the json files
+    param output_folder {str} the folder where the images will be saved
+    param max_img {int} the number of images to save per json file
+    param labels {Optional[List[str]]} the labels to consider,
+                                       None for all labels
+    param delete_on_error {bool} delete the output folder if an error
+                                 occurs
+    param test_size {float} the proportion of the dataset to include in the
+                            test split
+    param val_size {float} the proportion of the dataset to include in the
+                           validation split
     """
 
     if not os.path.exists(json_folder):
