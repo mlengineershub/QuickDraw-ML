@@ -40,17 +40,17 @@ from torchvision.models.shufflenetv2 import ShuffleNetV2
 from torchvision.models.mobilenet import MobileNetV2, MobileNetV3
 
 
-SklearnModel = Union[GaussianNB, 
-                     MultinomialNB, 
-                     RandomForestClassifier, 
-                     GradientBoostingClassifier, 
-                     AdaBoostClassifier, 
-                     ExtraTreesClassifier, 
-                     XGBClassifier, 
-                     LogisticRegression, 
-                     SGDClassifier, 
-                     SVC, 
-                     KNeighborsClassifier, 
+SklearnModel = Union[GaussianNB,
+                     MultinomialNB,
+                     RandomForestClassifier,
+                     GradientBoostingClassifier,
+                     AdaBoostClassifier,
+                     ExtraTreesClassifier,
+                     XGBClassifier,
+                     LogisticRegression,
+                     SGDClassifier,
+                     SVC,
+                     KNeighborsClassifier,
                      DecisionTreeClassifier]
 
 
@@ -86,7 +86,7 @@ class BaseClassifier(ABC):
     experiment_name: str
     metrics: Dict[str, Any]
 
-    def __init__(self, 
+    def __init__(self,
                  model_name: str,
                  output_dir: str,
                  device: str,
@@ -112,7 +112,7 @@ class BaseClassifier(ABC):
         self.run_name = None
         self.training_args = None
         self.metrics = {}
-        
+
         self.model_name = model_name
         self.output_dir = output_dir
         self.device = device
@@ -124,7 +124,7 @@ class BaseClassifier(ABC):
         self._set_training_args(**kwargs)
         self._set_device()
 
-    @final    
+    @final
     def _set_seed(self) -> None:
         """
         Set the seed for reproducibility
@@ -135,7 +135,7 @@ class BaseClassifier(ABC):
         torch.cuda.manual_seed_all(self.seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-    
+
     @abstractmethod
     def _set_device(self) -> None:
         """
@@ -145,12 +145,12 @@ class BaseClassifier(ABC):
         pass
 
     @abstractmethod
-    def _set_data(self, 
+    def _set_data(self,
                   data_path: str,
                   label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
-        
+
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices
         """

@@ -46,12 +46,12 @@ class FTClassifier(BaseClassifier):
     """
 
     experiment_name: Final[str] = "Fine_Tuning"
-    
+
     model: AutoModelForImageClassification
     image_processor: AutoImageProcessor
-    
+
     def __init__(self,
-                 model_name: str, 
+                 model_name: str,
                  output_dir: str,
                  device: str,
                  data_path: str,
@@ -69,11 +69,11 @@ class FTClassifier(BaseClassifier):
 
         self.image_processor = AutoImageProcessor.from_pretrained(model_name)
 
-        super().__init__(model_name, 
-                         output_dir, 
-                         device, 
-                         data_path, 
-                         {}, 
+        super().__init__(model_name,
+                         output_dir,
+                         device,
+                         data_path,
+                         {},
                          seed,
                          **kwargs)
 
@@ -81,10 +81,10 @@ class FTClassifier(BaseClassifier):
         """
         Set the device to use
         """
-        
+
         try:
             self.model.to(self.device)
-        except:
+        except Exception:
             print(f"Device {self.device} not found, using cpu instead")
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.model.to(self.device)
@@ -99,7 +99,7 @@ class FTClassifier(BaseClassifier):
             'pixel_values': torch.stack([x['pixel_values'] for x in batch]),
             'labels': torch.tensor([x['labels'] for x in batch])
         }
-    
+
     def __transform(self,
                     example_batch: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -110,35 +110,39 @@ class FTClassifier(BaseClassifier):
         """
 
         inputs = self.image_processor([x for x in example_batch['image']],
-                                        return_tensors='pt')
-        
+                                      return_tensors='pt')
+
         inputs['labels'] = example_batch['labels']
 
         return inputs
-        
 
-    def _set_data(self, 
+    def _set_data(self,
                   data_path: str,
                   label2idx: Dict[str, int]) -> None:
         """
         Set the data to use
 
         param data_path {str} the path where images are stored
-        param label2idx {Dict[str, int]} the mapping of labels to indices (not used here)
+        param label2idx {Dict[str, int]} the mapping of labels to indices
+                                         (not used here)
         """
 
         data_train = ImageFolder(data_path + "/train", transform=None)
         data_val = ImageFolder(data_path + "/val", transform=None)
         data_test = ImageFolder(data_path + "/test", transform=None)
 
-        assert data_train.class_to_idx == data_val.class_to_idx == data_test.class_to_idx
+        assert (data_train.class_to_idx == data_val.class_to_idx ==
+                data_test.class_to_idx)
 
         self.label2idx = data_train.class_to_idx
         self.idx2label = {v: k for k, v in self.label2idx.items()}
 
         datasets = DatasetDict({
-            split: Dataset.from_dict({"image": [image for image, _ in data], "labels": [label for _, label in data]})
-            for split, data in [('train', data_train), ('val', data_val), ('test', data_test)]
+            split: Dataset.from_dict({"image": [image for image, _ in data],
+                                      "labels": [label for _, label in data]})
+            for split, data in [('train', data_train),
+                                ('val', data_val),
+                                ('test', data_test)]
         })
 
         self.data = datasets.with_transform(self.__transform)
@@ -157,34 +161,56 @@ class FTClassifier(BaseClassifier):
 
         metrics = {
             "accuracy": accuracy_score(labels, preds),
-            "weighted_precision": precision_score(labels, preds, average="weighted"),
-            "weighted_recall": recall_score(labels, preds, average="weighted"),
-            "weighted_f1": f1_score(labels, preds, average="weighted"),
-            "macro_precision": precision_score(labels, preds, average="macro"),
-            "macro_recall": recall_score(labels, preds, average="macro"),
-            "macro_f1": f1_score(labels, preds, average="macro"),
-            "micro_precision": precision_score(labels, preds, average="micro"),
-            "micro_recall": recall_score(labels, preds, average="micro"),
-            "micro_f1": f1_score(labels, preds, average="micro"),
-            "mcc": matthews_corrcoef(labels, preds)
+            "weighted_precision": precision_score(labels,
+                                                  preds,
+                                                  average="weighted"),
+            "weighted_recall": recall_score(labels,
+                                            preds,
+                                            average="weighted"),
+            "weighted_f1": f1_score(labels,
+                                    preds,
+                                    average="weighted"),
+            "macro_precision": precision_score(labels,
+                                               preds,
+                                               average="macro"),
+            "macro_recall": recall_score(labels,
+                                         preds,
+                                         average="macro"),
+            "macro_f1": f1_score(labels,
+                                 preds,
+                                 average="macro"),
+            "micro_precision": precision_score(labels,
+                                               preds,
+                                               average="micro"),
+            "micro_recall": recall_score(labels,
+                                         preds,
+                                         average="micro"),
+            "micro_f1": f1_score(labels,
+                                 preds,
+                                 average="micro"),
+            "mcc": matthews_corrcoef(labels,
+                                     preds)
         }
-        
+
         return metrics
-    
+
     def _set_training_args(self,
                            **kwargs) -> None:
         """
         Set the training arguments
 
-        param kwargs {Dict[str, Any]} the training arguments for Vision Transformer
+        param kwargs {Dict[str, Any]} the training arguments
+        for Vision Transformer
         """
 
-        self.model = AutoModelForImageClassification.from_pretrained(self.model_name,
-                                                                     ignore_mismatched_sizes=True,
-                                                                     num_labels=len(self.label2idx),
-                                                                     label2id=self.label2idx,
-                                                                     id2label=self.idx2label)
-        
+        self.model = AutoModelForImageClassification.from_pretrained(
+            self.model_name,
+            ignore_mismatched_sizes=True,
+            num_labels=len(self.label2idx),
+            label2id=self.label2idx,
+            id2label=self.idx2label
+        )
+
         self.training_args = TrainingArguments(
             output_dir=self.output_dir,
             **kwargs
@@ -212,21 +238,25 @@ class FTClassifier(BaseClassifier):
         metrics = self.trainer.evaluate(eval_dataset=self.data[split])
 
         time = metrics.pop("eval_runtime") / len(self.data[split])
-        metrics = {re.sub(r"eval", split, key): value for key, value in metrics.items()}
+        metrics = {
+            re.sub(r"eval", split, key): value
+            for key, value in metrics.items()
+        }
 
         metrics[split + "_inference_time"] = time
 
         self.metrics.update(metrics)
 
         return metrics
-    
 
     def train(self) -> None:
         """
         Train the model
         """
 
-        experiment = mlflow.get_experiment_by_name(FTClassifier.experiment_name)
+        experiment = mlflow.get_experiment_by_name(
+            FTClassifier.experiment_name
+        )
         if experiment is None:
             print(f"Creating experiment: {self.experiment_name}")
             experiment_id = mlflow.create_experiment(self.experiment_name)
@@ -234,19 +264,25 @@ class FTClassifier(BaseClassifier):
             print(f"Using MLflow experiment: {self.experiment_name}")
             experiment_id = experiment.experiment_id
 
-        self.run_name = f"{self.model_name}_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
+        self.run_name = f"{self.model_name}_" \
+                        f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
 
-        with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
+        with mlflow.start_run(
+            run_name=self.run_name,
+            experiment_id=experiment_id
+        ):
             self.trainer.train()
             mlflow.log_params(self.training_args.to_dict())
             mlflow.log_metrics(self.compute_metrics('train'))
             mlflow.log_metrics(self.compute_metrics('val'))
-            
-            mlflow.log_metrics({'train_length': len(self.data['train']),
-                                'val_length': len(self.data['val']),
-                                'test_length': len(self.data['test']),
-                                'num_labels': len(self.label2idx)})
-    
+
+            mlflow.log_metrics({
+                'train_length': len(self.data['train']),
+                'val_length': len(self.data['val']),
+                'test_length': len(self.data['test']),
+                'num_labels': len(self.label2idx)
+            })
+
     def evaluate(self) -> Dict[str, float]:
         """
         Evaluate the model and log the results in MLflow
@@ -254,19 +290,27 @@ class FTClassifier(BaseClassifier):
         return {Dict[str, float]} the metrics
         """
 
-        experiment = mlflow.get_experiment_by_name(self.evaluation_experiment_name)
+        experiment = mlflow.get_experiment_by_name(
+            self.evaluation_experiment_name
+        )
         if experiment is None:
-            print(f"Creating MLflow experiment: {self.evaluation_experiment_name}")
-            experiment_id = mlflow.create_experiment(self.evaluation_experiment_name)
+            print("Creating MLflow experiment: " +
+                  self.evaluation_experiment_name)
+            experiment_id = mlflow.create_experiment(
+                self.evaluation_experiment_name
+            )
         else:
             experiment_id = experiment.experiment_id
 
-        with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
+        with mlflow.start_run(
+            run_name=self.run_name,
+            experiment_id=experiment_id
+        ):
             metrics = self.compute_metrics('test')
             mlflow.log_metrics(metrics)
             mlflow.log_metrics({'test_length': len(self.data['test']),
                                 'num_labels': len(self.label2idx)})
-            
+
         return metrics
 
     def plot_confusion_matrix(self,
@@ -286,7 +330,9 @@ class FTClassifier(BaseClassifier):
         cm = confusion_matrix(labels, preds)
 
         plt.figure(figsize=(12, 8))
-        sns.heatmap(cm, annot=False, fmt=".2f", cmap="Blues", xticklabels=self.idx2label.values(), yticklabels=self.idx2label.values())
+        sns.heatmap(cm, annot=False, fmt=".2f", cmap="Blues",
+                    xticklabels=self.idx2label.values(),
+                    yticklabels=self.idx2label.values())
         plt.xlabel("Predicted")
         plt.ylabel("True")
         plt.title(f"{split.capitalize()} Confusion Matrix")

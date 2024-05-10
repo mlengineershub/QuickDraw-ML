@@ -35,7 +35,17 @@ from transformers import AutoFeatureExtractor, AutoModel
 from datasets import Dataset, DatasetDict
 
 # Typing imports
-from typing import Any, Dict, Union, Callable, List, Tuple, Literal, Final, final
+from typing import (
+    Any,
+    Dict,
+    Union,
+    Callable,
+    List,
+    Tuple,
+    Literal,
+    Final,
+    final
+)
 
 # PyTorch imports
 import torch
@@ -54,7 +64,8 @@ from optuna.trial import Trial
 
 class FEClassifier(BaseClassifier, ABC):
     """
-    This class defines the methods that a classifier using feature extraction should implement
+    This class defines the methods that a classifier using feature extraction
+    should implement
     """
 
     _regex: Final[re.Pattern] = re.compile(r"(.+?)\(")
@@ -62,12 +73,12 @@ class FEClassifier(BaseClassifier, ABC):
 
     embedding_model_name: str
     classifier_model_name: str
-    classifier_model: SklearnModel # type: ignore
+    classifier_model: SklearnModel  # type: ignore
     embedding_model: Any
 
     def __init__(self,
                  embedding_model_name: str,
-                 classifier_model: SklearnModel, # type: ignore
+                 classifier_model: SklearnModel,  # type: ignore
                  output_dir: str,
                  data_path: str,
                  label2idx: Dict[str, int],
@@ -85,19 +96,20 @@ class FEClassifier(BaseClassifier, ABC):
         param device {str} the device to use
         param seed {int} the seed to use
         """
-        
+
         self.classifier_model = classifier_model
         self.classifier_model_name = self._get_model_name()
         self.embedding_model_name = embedding_model_name
-    
-        super().__init__(model_name=f"{self.embedding_model_name}_{self.classifier_model_name}",
+
+        super().__init__(model_name=f"{self.embedding_model_name}_\
+                         {self.classifier_model_name}",
                          output_dir=output_dir,
                          data_path=data_path,
                          label2idx=label2idx,
                          device=device,
                          seed=seed,
                          **kwargs)
-            
+
     def _set_device(self) -> None:
         """
         Set the device to use
@@ -105,11 +117,11 @@ class FEClassifier(BaseClassifier, ABC):
 
         try:
             self.embedding_model.to(self.device)
-        except:
+        except Exception:
             print(f"Device {self.device} not found, using cpu instead")
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
             self.embedding_model.to(self.device)
-    
+
     def _set_training_args(self,
                            **kwargs) -> None:
         """
@@ -117,10 +129,10 @@ class FEClassifier(BaseClassifier, ABC):
 
         param kwargs {Dict[str, Any]} the training arguments
         """
-          
+
         self.training_args = kwargs
         self.classifier_model.set_params(**kwargs)
-    
+
     def _get_model_name(self) -> str:
         """
         Get the name of the classifier model
@@ -129,7 +141,7 @@ class FEClassifier(BaseClassifier, ABC):
         """
 
         return self._regex.match(str(self.classifier_model)).group(1)
-    
+
     def compute_metrics(self,
                         split: str) -> Dict[str, float]:
         """
@@ -167,22 +179,43 @@ class FEClassifier(BaseClassifier, ABC):
         end = perf_counter()
 
         if split == "val" or split == "test":
-            metrics.update({f"{split}_inference_time": time + (end-start)/len(y_true)})
+            metrics.update({f"{split}_inference_time":
+                            time + (end-start)/len(y_true)})
 
-        metrics.update({f"{split}_accuracy": accuracy_score(y_true, y_pred),
-                        f"{split}_weighted_precision": precision_score(y_true, y_pred, average="weighted"),
-                        f"{split}_weighted_recall": recall_score(y_true, y_pred, average="weighted"),
-                        f"{split}_weighted_f1": f1_score(y_true, y_pred, average="weighted"),
-                        f"{split}_macro_precision": precision_score(y_true, y_pred, average="macro"),
-                        f"{split}_macro_recall": recall_score(y_true, y_pred, average="macro"),
-                        f"{split}_macro_f1": f1_score(y_true, y_pred, average="macro"),
-                        f"{split}_micro_precision": precision_score(y_true, y_pred, average="micro"),
-                        f"{split}_micro_recall": recall_score(y_true, y_pred, average="micro"),
-                        f"{split}_micro_f1": f1_score(y_true, y_pred, average="micro"),
-                        f"{split}_mcc": matthews_corrcoef(y_true, y_pred)})
+        metrics.update({
+            f"{split}_accuracy": accuracy_score(y_true, y_pred),
+            f"{split}_weighted_precision": precision_score(y_true,
+                                                           y_pred,
+                                                           average="weighted"),
+            f"{split}_weighted_recall": recall_score(y_true,
+                                                     y_pred,
+                                                     average="weighted"),
+            f"{split}_weighted_f1": f1_score(y_true,
+                                             y_pred,
+                                             average="weighted"),
+            f"{split}_macro_precision": precision_score(y_true,
+                                                        y_pred,
+                                                        average="macro"),
+            f"{split}_macro_recall": recall_score(y_true,
+                                                  y_pred,
+                                                  average="macro"),
+            f"{split}_macro_f1": f1_score(y_true,
+                                          y_pred,
+                                          average="macro"),
+            f"{split}_micro_precision": precision_score(y_true,
+                                                        y_pred,
+                                                        average="micro"),
+            f"{split}_micro_recall": recall_score(y_true,
+                                                  y_pred,
+                                                  average="micro"),
+            f"{split}_micro_f1": f1_score(y_true,
+                                          y_pred,
+                                          average="micro"),
+            f"{split}_mcc": matthews_corrcoef(y_true, y_pred)
+        })
 
         self.metrics.update(metrics)
-        
+
         return metrics
 
     def plot_confusion_matrix(self,
@@ -192,18 +225,20 @@ class FEClassifier(BaseClassifier, ABC):
 
         param split {str} the split to plot the confusion matrix on
         return {plt.Figure} the confusion matrix plot
-        """    
+        """
 
         y_true = self.data[split]["labels"]
         y_pred = self.classifier_model.predict(self.data[split]["embeddings"])
         cm = confusion_matrix(y_true, y_pred)
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         fig, ax = plt.subplots(figsize=(10, 10))
-        sns.heatmap(cm, annot=False, fmt=".2f", cmap="Blues", xticklabels=self.idx2label.values(), yticklabels=self.idx2label.values())
+        sns.heatmap(cm, annot=False, fmt=".2f", cmap="Blues",
+                    xticklabels=self.idx2label.values(),
+                    yticklabels=self.idx2label.values())
         ax.set_xlabel("Predicted labels")
         ax.set_ylabel("True labels")
         ax.set_title(f"{split.capitalize()} confusion matrix")
-        
+
         return fig
 
     def train(self) -> None:
@@ -213,15 +248,18 @@ class FEClassifier(BaseClassifier, ABC):
 
         print("Training model")
 
-        if isinstance(self.data, DatasetDict) and ("embeddings" not in self.data["train"].column_names):
+        if isinstance(self.data, DatasetDict) and \
+                ("embeddings" not in self.data["train"].column_names):
             print('No embeddings found, computing them')
             self.embed()
 
-        elif isinstance(self.data, dict) and ("embeddings" not in self.data["train"]):
+        elif isinstance(self.data, dict) and \
+                ("embeddings" not in self.data["train"]):
             print('No embeddings found, computing them')
             self.embed()
 
-        experiment = mlflow.get_experiment_by_name(FEClassifier.experiment_name)
+        experiment = mlflow.get_experiment_by_name(
+            FEClassifier.experiment_name)
         if experiment is None:
             print(f"Creating MLflow experiment: {self.experiment_name}")
             experiment_id = mlflow.create_experiment(self.experiment_name)
@@ -230,31 +268,41 @@ class FEClassifier(BaseClassifier, ABC):
             experiment_id = experiment.experiment_id
 
         try:
-            self.run_name = f"{self.model_name}_{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
-            with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
-                df_tmp = pd.DataFrame({"embeddings": self.data["train"]["embeddings"], 
-                                       "labels": self.data["train"]["labels"]})
+            self.run_name = f"{self.model_name}_" + \
+                            f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
+            with mlflow.start_run(run_name=self.run_name,
+                                  experiment_id=experiment_id
+                                  ):
+                df_tmp = pd.DataFrame({
+                    "embeddings": self.data["train"]["embeddings"],
+                    "labels": self.data["train"]["labels"]
+                })
                 df_tmp = df_tmp.sample(frac=1, random_state=self.seed)
-                self.classifier_model.fit(df_tmp["embeddings"].tolist(), df_tmp["labels"].tolist())
+                self.classifier_model.fit(df_tmp["embeddings"].tolist(),
+                                          df_tmp["labels"].tolist())
                 mlflow.log_params(self.training_args)
                 mlflow.log_metrics(self.compute_metrics("train"))
-                mlflow.log_metrics(self.compute_metrics("val")) 
+                mlflow.log_metrics(self.compute_metrics("val"))
 
                 if isinstance(self.data, DatasetDict):
-                    mlflow.log_metrics({"train_length": len(self.data["train"]),
-                                        "val_length": len(self.data["val"]),
-                                        "test_length": len(self.data["test"]),
-                                        "num_labels": len(self.label2idx)})
+                    mlflow.log_metrics({
+                        "train_length": len(self.data["train"]),
+                        "val_length": len(self.data["val"]),
+                        "test_length": len(self.data["test"]),
+                        "num_labels": len(self.label2idx)
+                    })
                 else:
-                    mlflow.log_metrics({"train_length": len(self.data["train"]["labels"]),
-                                        "val_length": len(self.data["val"]["labels"]),
-                                        "test_length": len(self.data["test"]["labels"]),
-                                        "num_labels": len(self.label2idx)})
+                    mlflow.log_metrics({
+                        "train_length": len(self.data["train"]["labels"]),
+                        "val_length": len(self.data["val"]["labels"]),
+                        "test_length": len(self.data["test"]["labels"]),
+                        "num_labels": len(self.label2idx)
+                    })
 
         except Exception as e:
             self.run_name = None
             print(e)
-    
+
     def evaluate(self) -> Dict[str, float]:
         """
         Evaluate the model and log the results in MLflow
@@ -262,40 +310,55 @@ class FEClassifier(BaseClassifier, ABC):
         return {Dict[str, float]} the metrics
         """
 
-        experiment = mlflow.get_experiment_by_name(self.evaluation_experiment_name)
+        experiment = mlflow.get_experiment_by_name(
+            self.evaluation_experiment_name
+        )
         if experiment is None:
-            print(f"Creating MLflow experiment: {self.evaluation_experiment_name}")
-            experiment_id = mlflow.create_experiment(self.evaluation_experiment_name)
+            print("Creating MLflow experiment: " +
+                  self.evaluation_experiment_name)
+            experiment_id = mlflow.create_experiment(
+                self.evaluation_experiment_name
+            )
         else:
             experiment_id = experiment.experiment_id
 
-        with mlflow.start_run(run_name=self.run_name, experiment_id=experiment_id):
+        with mlflow.start_run(run_name=self.run_name,
+                              experiment_id=experiment_id):
             metrics = self.compute_metrics("test")
             mlflow.log_metrics(metrics=metrics)
 
             if isinstance(self.data, DatasetDict):
-                mlflow.log_metrics({"test_length": len(self.data["test"]),
-                                    "num_labels": len(self.label2idx)})
+                mlflow.log_metrics({
+                    "test_length": len(self.data["test"]),
+                    "num_labels": len(self.label2idx)
+                })
             else:
-                mlflow.log_metrics({"test_length": len(self.data["test"]["labels"]),
-                                    "num_labels": len(self.label2idx)})
+                mlflow.log_metrics({
+                    "test_length": len(self.data["test"]["labels"]),
+                    "num_labels": len(self.label2idx)
+                })
 
         return metrics
-    
+
     @final
     def optimize(self,
                  objective_metric: Callable[[Any, Any], float],
                  direction: Literal["maximize", "minimize"],
-                 params: Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]],
+                 params: Dict[str, Union[Tuple[int, int],
+                                         Tuple[float, float],
+                                         List[str]]],
                  cv: int,
                  n_trials: int,
                  n_jobs: int = -1) -> pd.DataFrame:
         """
         Optimize the classifier model using Optuna and cross-validation
 
-        param objective_metric {Callable[[Any, Any], float]} the objective metric to optimize
+        param objective_metric {Callable[[Any, Any], float]} the objective
+                                metric to optimize
         param direction {str} the direction to optimize the objective metric
-        param params {Dict[str, Union[Tuple[int, int], Tuple[float, float], List[str]]} the parameters to optimize
+        param params {Dict[str, Union[Tuple[int, int],
+                                Tuple[float, float],
+                                List[str]]} the parameters to optimize
         param cv {int} the number of folds for cross-validation
         param n_trials {int} the number of trials to run
         param n_jobs {int} the number of jobs to run in parallel
@@ -320,7 +383,8 @@ class FEClassifier(BaseClassifier, ABC):
             }
         """
 
-        print(f"Optimizing {len(params)} of a {self.classifier_model_name} model using {objective_metric} as the objective metric")
+        print(f"Optimizing {len(params)} of a {self.classifier_model_name} "
+              f"model using {objective_metric} as the objective metric")
 
         if isinstance(self.data, DatasetDict):
             if "embeddings" not in self.data["train"].column_names:
@@ -331,11 +395,22 @@ class FEClassifier(BaseClassifier, ABC):
                 print('No embeddings found, computing them')
                 self.embed()
 
-        model = self.classifier_model.__class__(**self.classifier_model.get_params())
+        model = self.classifier_model.__class__(
+            **self.classifier_model.get_params()
+        )
 
-        df_tmp = pd.DataFrame({"embeddings": np.concatenate([self.data["train"]["embeddings"], self.data["val"]["embeddings"]], axis=0),
-                               "labels": np.concatenate([self.data["train"]["labels"], self.data["val"]["labels"]], axis=0)})
-        
+        df_tmp = pd.DataFrame({
+            "embeddings": np.concatenate(
+                [self.data["train"]["embeddings"],
+                 self.data["val"]["embeddings"]],
+                axis=0
+            ),
+            "labels": np.concatenate(
+                [self.data["train"]["labels"], self.data["val"]["labels"]],
+                axis=0
+            )
+        })
+
         df_tmp = df_tmp.sample(frac=1, random_state=self.seed)
 
         def objective(trial: Trial) -> float:
@@ -351,31 +426,41 @@ class FEClassifier(BaseClassifier, ABC):
                 try:
                     if isinstance(value, tuple) and len(value) == 2:
                         if all(isinstance(v, float) for v in value):
-                            trial_params[key] = trial.suggest_float(key, value[0], value[1], log=False)
+                            trial_params[key] = trial.suggest_float(
+                                key, value[0], value[1], log=False
+                            )
                         elif all(isinstance(v, int) for v in value):
-                            trial_params[key] = trial.suggest_int(key, value[0], value[1])
-                    elif isinstance(value, list) and all(isinstance(v, str) for v in value):
-                        trial_params[key] = trial.suggest_categorical(key, value)
+                            trial_params[key] = trial.suggest_int(
+                                key, value[0], value[1]
+                            )
+                    elif isinstance(value, list) and all(
+                            isinstance(v, str) for v in value
+                    ):
+                        trial_params[key] = trial.suggest_categorical(key,
+                                                                      value)
                     else:
-                        raise ValueError(f"Unsupported type or structure for parameter {key}: {value}")
+                        raise ValueError(
+                            "Unsupported type or structure for parameter "
+                            f"{key}: {value}"
+                        )
                 except ValueError as e:
                     warnings.warn(str(e))
                     continue
-            
-            if len(trial_params) == 0:
-                raise ValueError("No valid parameters were provided to configure the model.")
 
-            model.set_params(**trial_params)
-            scores = cross_val_score(model, 
-                                     df_tmp["embeddings"].tolist(), 
-                                     df_tmp["labels"].tolist(), 
-                                     cv=cv, 
-                                     n_jobs=n_jobs, 
+            if len(trial_params) == 0:
+                raise ValueError("No valid parameters were provided "
+                                 "to configure the model.")
+            scores = cross_val_score(model,
+                                     df_tmp["embeddings"].tolist(),
+                                     df_tmp["labels"].tolist(),
+                                     cv=cv,
+                                     n_jobs=n_jobs,
                                      scoring=objective_metric)
-            
+
             return scores.mean()
 
-        study = create_study(direction=direction, sampler=TPESampler(seed=self.seed))
+        study = create_study(direction=direction,
+                             sampler=TPESampler(seed=self.seed))
         study.optimize(objective, n_trials=n_trials)
 
         study_results = study.trials_dataframe()
@@ -393,15 +478,15 @@ class FEClassifier(BaseClassifier, ABC):
     @abstractmethod
     def _embed_batch(self,
                      batch) -> Dict[str, np.ndarray]:
-            """
-            Embed a batch of images
+        """
+        Embed a batch of images
 
-            param batch {List[PngImageFile]} the batch of images
-            return {Dict[str, np.ndarray]} the embeddings
-            """
-    
-            pass
-    
+        param batch {List[PngImageFile]} the batch of images
+        return {Dict[str, np.ndarray]} the embeddings
+        """
+
+        pass
+
     @abstractmethod
     def _get_random_images(self,
                            n: int) -> Union[DataLoader, Dataset]:
@@ -409,7 +494,8 @@ class FEClassifier(BaseClassifier, ABC):
         Get the first n images of a dataset
 
         param n {int} the number of images to get
-        return {Union[DataLoader, Dataset]} the first n images from the image folder
+        return {Union[DataLoader, Dataset]} the first n images from
+        the image folder
         """
 
         pass
@@ -425,18 +511,15 @@ class FEClassifier(BaseClassifier, ABC):
 
 class TorchFEClassifier(FEClassifier):
     """
-    This class aims to classify images using a Torch model for feature extraction
+    This class aims to classify images using a Torch model
+    for feature extraction
     """
 
-    tranform = Compose([
-        Resize((224, 224)), 
-        ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+    tranform: Final[Compose]
 
     def __init__(self,
                  embedding_model: TorchModel,
-                 classifier_model: SklearnModel, # type: ignore
+                 classifier_model: SklearnModel,  # type: ignore
                  output_dir: str,
                  data_path: str,
                  device: str,
@@ -454,15 +537,22 @@ class TorchFEClassifier(FEClassifier):
         param seed {int} the seed to use
         """
 
+        self.transform = Compose([
+            Resize((224, 224)),
+            ToTensor(),
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
         self.embedding_model = embedding_model
-        super().__init__(embedding_model_name=embedding_model.__class__.__name__,
-                         classifier_model=classifier_model,
-                         output_dir=output_dir,
-                         data_path=data_path,
-                         label2idx={},
-                         device=device,
-                         seed=seed)
-        
+        super().__init__(
+            embedding_model_name=embedding_model.__class__.__name__,
+            classifier_model=classifier_model,
+            output_dir=output_dir,
+            data_path=data_path,
+            label2idx={},
+            device=device,
+            seed=seed
+        )
+
     def _set_data(self,
                   data_path: str,
                   label2idx: Dict[str, int]) -> None:
@@ -470,14 +560,19 @@ class TorchFEClassifier(FEClassifier):
         Set the data to use
 
         param data_path {str} the path where images are stored
-        param label2idx {Dict[str, int]} the mapping of labels to indices (here {})
+        param label2idx {Dict[str, int]} the mapping of labels to indices
+                                         (here {})
         """
-        
-        data_train = ImageFolder(root=f"{data_path}/train", transform=self.tranform)
-        data_val = ImageFolder(root=f"{data_path}/val", transform=self.tranform)
-        data_test = ImageFolder(root=f"{data_path}/test", transform=self.tranform)
 
-        assert data_train.class_to_idx == data_val.class_to_idx == data_test.class_to_idx
+        data_train = ImageFolder(root=f"{data_path}/train",
+                                 transform=self.tranform)
+        data_val = ImageFolder(root=f"{data_path}/val",
+                               transform=self.tranform)
+        data_test = ImageFolder(root=f"{data_path}/test",
+                                transform=self.tranform)
+
+        assert (data_train.class_to_idx == data_val.class_to_idx ==
+                data_test.class_to_idx)
 
         self.label2idx = data_train.class_to_idx
         self.idx2label = {v: k for k, v in self.label2idx.items()}
@@ -488,61 +583,67 @@ class TorchFEClassifier(FEClassifier):
 
         self.data = {"train": dataloader_train,
                      "val": dataloader_val,
-                     "test": dataloader_test }
-    
-    
+                     "test": dataloader_test}
+
     def embed(self) -> None:
         """
         Embed the images of the dataset
         """
 
-        self.data = {split: self._embed_batch(batch) for split, batch in self.data.items()}
+        self.data = {
+            split: self._embed_batch(batch)
+            for split, batch in self.data.items()
+        }
 
     def _embed_batch(self,
-                     batch: DataLoader) -> Dict[str, Union[np.ndarray, np.ndarray]]:
-            """
-            Embed a batch of images
+                     batch: DataLoader) -> Dict[str,
+                                                Union[np.ndarray, np.ndarray]]:
+        """
+        Embed a batch of images
 
-            param data {DataLoader} the data to embed
-            return {Dict[str, np.ndarray]} the embeddings
-            """
-    
-            with torch.inference_mode():
-                embeddings = []
-                all_labels = []
-                for images, labels in tqdm(batch, desc="Embedding images"):
-                    embeddings.append(self.embedding_model(images.to(self.device)).cpu().detach().numpy())
-                    all_labels.extend(labels.cpu().detach().numpy())
+        param data {DataLoader} the data to embed
+        return {Dict[str, np.ndarray]} the embeddings
+        """
 
-                return {"embeddings": np.concatenate(embeddings),
-                        "labels": np.array(all_labels)}
-    
-    def _get_random_images(self, 
+        with torch.inference_mode():
+            embeddings = []
+            all_labels = []
+            for images, labels in tqdm(batch, desc="Embedding images"):
+                embedded_images = self.embedding_model(images.to(self.device))
+                embeddings.append(embedded_images.cpu().detach().numpy())
+                all_labels.extend(labels.cpu().detach().numpy())
+
+            return {"embeddings": np.concatenate(embeddings),
+                    "labels": np.array(all_labels)}
+
+    def _get_random_images(self,
                            n: int) -> DataLoader:
-            """
-            Get the first n images of a DataLoader
+        """
+        Get the first n images of a DataLoader
 
-            param n {int} the number of images to get
-            return {DataLoader} the first n images from the image folder
-            """
+        param n {int} the number of images to get
+        return {DataLoader} the first n images from the image folder
+        """
 
-            images_dataset = ImageFolder(root=f"{self.data_path}/train", transform=self.tranform)
+        images_dataset = ImageFolder(root=f"{self.data_path}/train",
+                                     transform=self.tranform)
 
-            images_dataset.samples = images_dataset.samples[:n]
+        images_dataset.samples = images_dataset.samples[:n]
 
-            return DataLoader(images_dataset, batch_size=1, shuffle=False)
-    
+        return DataLoader(images_dataset, batch_size=1, shuffle=False)
+
 
 class TransformersFEClassifier(FEClassifier):
     """
-    This class aims to classify images using a Vision Transformer model(ViT) for feature extraction
+    This class aims to classify images using a Vision Transformer model(ViT)
+    for feature extraction
     """
 
-    feature_extractor: AutoFeatureExtractor
+    feature_extractor: Final[AutoFeatureExtractor]
 
     def __init__(self,
                  embedding_model_name: str,
-                 classifier_model: SklearnModel, # type: ignore
+                 classifier_model: SklearnModel,  # type: ignore
                  output_dir: str,
                  data_path: str,
                  label2idx: Dict[str, int],
@@ -561,8 +662,12 @@ class TransformersFEClassifier(FEClassifier):
         param seed {int} the seed to use
         """
 
-        self.feature_extractor = AutoFeatureExtractor.from_pretrained(embedding_model_name)
-        self.embedding_model = AutoModel.from_pretrained(embedding_model_name, **kwargs)            
+        self.feature_extractor = (
+            AutoFeatureExtractor.from_pretrained(embedding_model_name)
+        )
+        self.embedding_model = (
+            AutoModel.from_pretrained(embedding_model_name, **kwargs)
+        )
         super().__init__(embedding_model_name=embedding_model_name,
                          classifier_model=classifier_model,
                          output_dir=output_dir,
@@ -580,11 +685,11 @@ class TransformersFEClassifier(FEClassifier):
         param data_path {str} the path where images are stored
         param label2idx {Dict[str, int]} the mapping of labels to indices
         """
-    
-        data = {"train": {"image": [], "labels" : []},
-                    "val": {"image": [], "labels" : []},
-                    "test": {"image": [], "labels" : []}}
-        
+
+        data = {"train": {"image": [], "labels": []},
+                "val": {"image": [], "labels": []},
+                "test": {"image": [], "labels": []}}
+
         for key in data.keys():
             classes = os.listdir(f"{data_path}/{key}")
             images = []
@@ -598,12 +703,12 @@ class TransformersFEClassifier(FEClassifier):
             data[key]["image"] = images
             data[key]["labels"] = labels
             data[key] = Dataset.from_dict(data[key])
-        
+
         self.label2idx = label2idx
         self.idx2label = {v: k for k, v in label2idx.items()}
         self.data = DatasetDict(data)
-    
-    def _embed_batch(self, 
+
+    def _embed_batch(self,
                      batch) -> Dict[str, np.ndarray]:
         """
         Embed a batch of images
@@ -613,20 +718,21 @@ class TransformersFEClassifier(FEClassifier):
         """
 
         with torch.inference_mode():
-            features = self.feature_extractor(images=batch, return_tensors="pt")
+            features = self.feature_extractor(images=batch,
+                                              return_tensors="pt")
             output = self.embedding_model(**features)
-            return {"embeddings": output.pooler_output.cpu().numpy().squeeze()} 
+            return {"embeddings": output.pooler_output.cpu().numpy().squeeze()}
 
     def embed(self) -> None:
         """
         Embed the images of the dataset
-        """   
-        
+        """
+
         self.data = self.data.map(lambda x: self._embed_batch(x["image"]),
                                   batched=False)
-        
+
     def _get_random_images(self,
-                            n: int) -> Dataset:
+                           n: int) -> Dataset:
         """
         Get the first n images of a dataset
 
@@ -635,4 +741,3 @@ class TransformersFEClassifier(FEClassifier):
         """
 
         return self.data["train"].select(range(n))
-    
