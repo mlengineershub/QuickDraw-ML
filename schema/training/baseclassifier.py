@@ -71,7 +71,7 @@ class BaseClassifier(ABC):
     Either a feature extraction classifier, fine tuning classifier...
     """
 
-    evaluation_experiment_name: Final[str] = "evaluation"
+    evaluation_experiment_name: Final[str] = "Benchmark"
 
     model_name: str
     output_dir: str
