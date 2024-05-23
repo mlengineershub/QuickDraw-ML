@@ -56,4 +56,4 @@ A progress bar will appear to show the generation's progress.
 
 Here an example of images in the train set:
 
-![Sample Images](../notebooks/plots/sample_images.png)
+![Sample Images](./sample_images.png)
