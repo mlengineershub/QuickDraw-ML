@@ -28,7 +28,6 @@ Below is the project structure, detailing the main folders and their contents:
 |------------------|-----------------------------------------------------------|
 | `data/`           | Contains modules for generating and managing the dataset. |
 | `mlruns/`         | Includes all experiments done.           |
-| `notebooks/`       | Notebooks showcasing demos of classes and techniques.     |
 | `schema/`     | Contains all classes for training models in various ways. |
 | `requirements.txt` | Lists all dependencies required by the project.          |
 
@@ -48,4 +47,3 @@ pip install -r requirements.txt
 ```bash
 python data/dataset_builder.py data/size_10000 data --max_images 250 --labels data/labels.txt
 ```
-4. **Explore the demo notebooks** to learn about using the training classes and techniques.
