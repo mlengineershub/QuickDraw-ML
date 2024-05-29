@@ -17,9 +17,6 @@ The repository contains several classes designed for the training of machine lea
 ### Dataset Setup Functions
 A suite of functions are provided to streamline the process of preparing the QuickDraw dataset. These include downloading, splitting into train/test sets, and preprocessing.
 
-### Demo Notebooks
-A collection of notebooks within the repository serve as practical demonstrations for the implemented classes and techniques. These demos provide insights into how the training classes are applied and evaluate the efficacy of the models trained.
-
 ## Project Structure
 
 Below is the project structure, detailing the main folders and their contents:
